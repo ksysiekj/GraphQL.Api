@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using GraphQL.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,7 +27,22 @@ namespace GraphQL.Api
         public void ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
+            services.AddSingleton<IConfiguration>(
+                c => { return Configuration; }
+            );
+
+            services.AddTransient<IGraphQLSchemaProvider, GraphQLSchemaProvider>();
+
+            // Add framework services.
             services.AddMvc();
+
+            services.AddEntityFramework();
+
+            services.AddDbContext<GraphQL.Model.AdventureWorksDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]);
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -36,6 +50,20 @@ namespace GraphQL.Api
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            //app.UseDefaultFiles();
+
+
+            //app.UseStaticFiles(new StaticFileOptions
+            //{
+            //    OnPrepareResponse = (context) =>
+            //    {
+            //        // Disable caching for all static files.
+            //        //context.Context.Response.Headers["Cache-Control"] = Configuration["StaticFiles:Headers:Cache-Control"];
+            //        //context.Context.Response.Headers["Pragma"] = Configuration["StaticFiles:Headers:Pragma"];
+            //        //context.Context.Response.Headers["Expires"] = Configuration["StaticFiles:Headers:Expires"];
+            //    }
+            //});
 
             app.UseMvc();
         }
